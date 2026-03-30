@@ -21,7 +21,7 @@ I used `DEV.` as the prefix for all Devices repos. Should it be something else?
 ## Non-Blocking (Decide Anytime)
 
 ### Q3: Custom Subdomain
-Do you want a custom subdomain like `devices.ihe.net` or `dev.ihe.net` for the Devices domain's published documents? Or is `ihe.github.io/DEV.{repo}` fine for now?
+If the org upgrades to a paid plan in the future, would you want a custom subdomain like `devices.ihe.net` for published documents? Not actionable now, but good to know for planning.
 
 ### Q4: White Papers
 Is a white papers repo needed now, or is that a future thing? If now, does it need its own template or can it use the supplement template?

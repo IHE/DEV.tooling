@@ -23,7 +23,7 @@
 ### Template: `DEV.supplement-template`
 - [ ] Create the repo in the IHE org
 - [ ] Set up directory structure for AsciiDoc supplements (see below)
-- [ ] Create `.github/workflows/publish.yml` — AsciiDoc → HTML + PDF → `gh-pages`
+- [ ] Create `.github/workflows/publish.yml` — AsciiDoc → HTML + PDF (build artifacts)
 - [ ] Add `README.md` with placeholder tokens for supplement name, status, etc.
 - [ ] Add `CONTRIBUTING.md` with Devices domain contribution guidelines
 - [ ] Add `.github/PULL_REQUEST_TEMPLATE.md`
@@ -43,8 +43,7 @@
 
 ### Playbooks: `DEV.documentation`
 - [ ] Create the repo
-- [ ] Enable GitHub Pages with Jekyll (Settings → Pages → Source: branch `main`, folder `/ (root)` or `/docs`)
-- [ ] Set up minimal Jekyll config (`_config.yml` with title and theme)
+- [ ] Verify Markdown renders correctly in GitHub web UI
 - [ ] Write and publish the following guides:
   - [ ] **Org Admin Playbook** (how to create repos, assign teams)
   - [ ] **Domain Lead Playbook** (how to manage teams, configure repos)
@@ -70,14 +69,14 @@
 
 ### CI/CD Validation
 - [ ] Test the AsciiDoc publish workflow end-to-end with real content
-- [ ] Verify GitHub Pages serves the rendered output correctly
+- [ ] Verify build artifacts (HTML + PDF) are downloadable from Actions tab
 - [ ] Set up caching in GitHub Actions (Ruby gems for Asciidoctor) for faster builds
 
 ### Pilot
 - [ ] Create one real supplement repo from the template
 - [ ] Have a lead author make a real edit via PR
 - [ ] Review and merge the PR
-- [ ] Verify the published output on GitHub Pages
+- [ ] Verify the build completes and artifacts are downloadable
 - [ ] Collect feedback and iterate
 
 ---

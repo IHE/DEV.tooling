@@ -43,7 +43,7 @@ IHE documents typically move through these stages:
 - Do we use GitHub Releases to mark lifecycle transitions?
 - Do we use tags (e.g., `v1.0-public-comment`, `v2.0-final-text`)?
 - Do we use branches for different lifecycle stages?
-- How does the published output (GitHub Pages) reflect the current stage?
+- How does the published output reflect the current stage?
 
 ---
 
@@ -86,7 +86,7 @@ Use imperative mood, describe what was done:
 3. Org Admin creates the repo from the template
 4. Org Admin assigns the `Devices-Domain` team as Admin
 5. Org Admin confirms back via email with the repo URL
-6. Domain Lead configures branch protection and GitHub Pages
+6. Domain Lead configures branch protection and repo settings
 
 ---
 

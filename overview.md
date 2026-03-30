@@ -33,7 +33,7 @@ This is the `DEV.tooling` repo for the IHE Devices domain GitHub transition. It 
 │   ├── governance.md            # Governance framework (stubbed)
 │   └── adr/                     # Architecture Decision Records
 │
-├── DEV.documentation/               # Proto-repo: Jekyll site for docs
+├── DEV.documentation/               # Sibling repo: plain Markdown docs
 │   └── (to be scaffolded)
 │
 └── DEV.supplement-template/     # Proto-repo: supplement template

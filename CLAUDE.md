@@ -7,7 +7,7 @@ This is the **tooling and process hub** for the IHE Devices domain's GitHub tran
 - Planning documents and task tracking for the transition project
 - Shared GitHub Actions and build scripts (once built)
 - Proto-directories for repos that will be pushed to their own remotes:
-  - `DEV.documentation/` — documentation site (Jekyll + GitHub Pages)
+  - `DEV.documentation/` — documentation (plain Markdown, rendered by GitHub)
   - `DEV.supplement-template/` — template repo for new supplement documents
 
 ## Conventions

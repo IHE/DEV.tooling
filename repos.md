@@ -18,7 +18,7 @@
 
 | Repo Name | Purpose | Notes |
 |-----------|---------|-------|
-| `DEV.documentation` | Documentation, governance, onboarding guides. Hosted at GitHub Pages. | The "how everything works" hub. Built with Jekyll (GitHub's built-in static site — just push Markdown). |
+| `DEV.documentation` | Documentation, governance, onboarding guides. | The "how everything works" hub. Plain Markdown — GitHub renders it natively. Anyone can edit via the web UI. |
 | `DEV.tooling` | Planning docs, shared GitHub Actions, Asciidoctor build scripts, reusable workflows. Also contains proto-directories for other repos during bootstrapping. | Referenced by template workflows via `uses: IHE/DEV.tooling/...` |
 
 ---

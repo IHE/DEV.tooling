@@ -11,7 +11,7 @@ Once an Org Admin creates a repo and assigns the `Devices-Domain` team, you take
 
 **What you do:**
 1. Manage team membership — add/remove contributors and lead authors
-2. Configure new repositories — branch protection, GitHub Pages
+2. Configure new repositories — branch protection, settings
 3. Oversee the contribution workflow — PRs, reviews, merges
 4. Request new repos from Org Admins when needed
 
@@ -56,14 +56,7 @@ After the Org Admin creates a repo from a template and assigns the team, do thes
    - ☑ Do not allow bypassing the above settings
 5. Click **"Create"**
 
-### 2b. Enable GitHub Pages
-
-1. Go to repo **Settings → Pages**
-2. Source: **Deploy from a branch**
-3. Branch: **`gh-pages`** / `/ (root)`
-4. Click **"Save"**
-
-### 2c. Update the README
+### 2b. Update the README
 
 The template README has placeholders. Replace them with the actual supplement name, description, and any other metadata.
 
@@ -92,8 +85,8 @@ The supplement template comes with a pre-configured GitHub Actions workflow:
 
 - **File:** `.github/workflows/publish.yml`
 - **Trigger:** Push to `main`
-- **What it does:** Renders AsciiDoc → HTML + PDF → deploys to `gh-pages` branch
-- **Result:** GitHub Pages serves the rendered document
+- **What it does:** Renders AsciiDoc → HTML + PDF
+- **Result:** Built files are available as downloadable artifacts in the Actions tab
 
 ### Checking Build Status
 
@@ -106,7 +99,6 @@ The supplement template comes with a pre-configured GitHub Actions workflow:
 | Problem | Fix |
 |---------|-----|
 | Build fails | Click the red X, read the log. Usually an AsciiDoc syntax error or missing file. |
-| Pages not updating | Verify Pages is set to deploy from `gh-pages` in Settings → Pages. |
 
 ---
 
@@ -140,5 +132,4 @@ main (protected — no direct pushes)
 | Manage team | `github.com/orgs/IHE/teams/devices-domain/members` |
 | Repo settings | `github.com/IHE/{repo}/settings` |
 | Branch protection | `github.com/IHE/{repo}/settings/branches` |
-| GitHub Pages | `github.com/IHE/{repo}/settings/pages` |
 | CI/CD runs | `github.com/IHE/{repo}/actions` |
