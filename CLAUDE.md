@@ -1,4 +1,4 @@
-# dev-tooling — IHE Devices Domain
+# DEV.tooling — IHE Devices Domain
 
 ## What This Repo Is
 
@@ -7,12 +7,12 @@ This is the **tooling and process hub** for the IHE Devices domain's GitHub tran
 - Planning documents and task tracking for the transition project
 - Shared GitHub Actions and build scripts (once built)
 - Proto-directories for repos that will be pushed to their own remotes:
-  - `dev-playbooks/` — documentation site (Jekyll + GitHub Pages)
-  - `dev-template-supplement/` — template repo for new supplement documents
+  - `DEV.documentation/` — documentation site (Jekyll + GitHub Pages)
+  - `DEV.template-supplement/` — template repo for new supplement documents
 
 ## Conventions
 
-- **Repo prefix:** All Devices domain repos use the `dev-` prefix
+- **Repo prefix:** All Devices domain repos use the `DEV.` prefix
 - **Branch strategy:** Feature branches off `main`, merge via PR
 - **AsciiDoc:** Supplements are authored in AsciiDoc, rendered to HTML+PDF via CI
 - **No FHIR IG tooling** in this scope
@@ -20,7 +20,7 @@ This is the **tooling and process hub** for the IHE Devices domain's GitHub tran
 
 ## Sub-Repos
 
-Each subdirectory under the root that starts with `dev-` is a proto-repo. When ready, it gets:
+Each subdirectory under the root that starts with `DEV.` is a proto-repo. When ready, it gets:
 1. A GitHub repo created by an Org Admin
 2. Its contents pushed as the initial commit
 3. Further development happens in its own repo

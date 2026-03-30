@@ -21,8 +21,8 @@ git config --global user.name "Your Name"
 git config --global user.email "your.email@example.com"
 
 # Clone the repo you'll work on
-git clone https://github.com/IHE/dev-{supplement-name}.git
-cd dev-{supplement-name}
+git clone https://github.com/IHE/DEV.{supplement-name}.git
+cd DEV.{supplement-name}
 ```
 
 ---
@@ -107,8 +107,8 @@ As a Lead Author, you are the primary owner of a specific supplement or document
 2. **Review PRs** — you're the first reviewer for changes to your document
 3. **Manage the document lifecycle** — track status (draft, public comment, trial implementation, final text)
 4. **Request the repo** — when starting a new supplement, email the Org Admin (or ask the Domain Lead to) with:
-   - Repository name: `dev-{supplement-name}`
-   - Template: `dev-template-supplement`
+   - Repository name: `DEV.{supplement-name}`
+   - Template: `DEV.template-supplement`
    - Description: one-liner about the supplement
    - Your GitHub username
 
@@ -214,4 +214,4 @@ git merge main
 
 - **Git/GitHub questions:** Ask the Domain Lead
 - **Content questions:** Discuss in the PR comments
-- **Template or build issues:** File an issue on the `dev-tooling` repo
+- **Template or build issues:** File an issue on the `DEV.tooling` repo

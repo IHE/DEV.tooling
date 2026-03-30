@@ -51,13 +51,13 @@ IHE documents typically move through these stages:
 
 ### Repositories
 
-All Devices domain repos use the `dev-` prefix:
+All Devices domain repos use the `DEV.` prefix:
 
 ```
-dev-{document-name}
+DEV.{document-name}
 ```
 
-Examples: `dev-wia`, `dev-sdpi`, `dev-playbooks`, `dev-tooling`
+Examples: `DEV.wia`, `DEV.sdpi`, `DEV.playbooks`, `DEV.tooling`
 
 ### Branches
 
@@ -79,8 +79,8 @@ Use imperative mood, describe what was done:
 
 1. Domain Lead or Lead Author identifies the need for a new repo
 2. They email the Org Admin with:
-   - Repository name (`dev-{name}`)
-   - Which template to use (`dev-template-supplement`)
+   - Repository name (`DEV.{name}`)
+   - Which template to use (`DEV.template-supplement`)
    - Short description
    - Lead Author's GitHub username
 3. Org Admin creates the repo from the template

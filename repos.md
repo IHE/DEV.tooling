@@ -8,7 +8,7 @@
 
 | Repo Name | Purpose | Status |
 |-----------|---------|--------|
-| `dev-template-supplement` | Template for new Supplement documents (AsciiDoc + CI/CD) | To build |
+| `DEV.template-supplement` | Template for new Supplement documents (AsciiDoc + CI/CD) | To build |
 
 > Must have **"Template repository"** checked in Settings → General.
 
@@ -18,8 +18,8 @@
 
 | Repo Name | Purpose | Notes |
 |-----------|---------|-------|
-| `dev-playbooks` | Documentation, governance, onboarding guides. Hosted at GitHub Pages. | The "how everything works" hub. Built with Jekyll (GitHub's built-in static site — just push Markdown). |
-| `dev-tooling` | Planning docs, shared GitHub Actions, Asciidoctor build scripts, reusable workflows. Also contains proto-directories for other repos during bootstrapping. | Referenced by template workflows via `uses: IHE/dev-tooling/...` |
+| `DEV.documentation` | Documentation, governance, onboarding guides. Hosted at GitHub Pages. | The "how everything works" hub. Built with Jekyll (GitHub's built-in static site — just push Markdown). |
+| `DEV.tooling` | Planning docs, shared GitHub Actions, Asciidoctor build scripts, reusable workflows. Also contains proto-directories for other repos during bootstrapping. | Referenced by template workflows via `uses: IHE/DEV.tooling/...` |
 
 ---
 
@@ -28,22 +28,22 @@
 | Repo Name | Purpose | Status |
 |-----------|---------|--------|
 | *(existing TF repo)* | Devices Technical Framework (already exists) | No migration needed |
-| `dev-{supplement-name}` | Individual supplement repos, created from `dev-template-supplement` | Created on demand |
-| `dev-whitepapers` | White papers (maybe) | TBD |
+| `DEV.{supplement-name}` | Individual supplement repos, created from `DEV.template-supplement` | Created on demand |
+| `DEV.whitepapers` | White papers (maybe) | TBD |
 
 ---
 
 ## Naming Convention
 
 ```
-dev-{document-type-or-name}
+DEV.{name}
 ```
 
 **Examples:**
-- `dev-template-supplement` — the supplement template
-- `dev-wia` — a supplement called "WIA"
-- `dev-sdpi` — a supplement called "SDPi"
-- `dev-playbooks` — the documentation site
+- `DEV.template-supplement` — the supplement template
+- `DEV.wia` — a supplement called "WIA"
+- `DEV.sdpi` — a supplement called "SDPi"
+- `DEV.documentation` — the documentation site
 
 ---
 

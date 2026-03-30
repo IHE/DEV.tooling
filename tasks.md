@@ -20,7 +20,7 @@
 - [ ] Add initial contributors as team Members
 - [ ] Document the team roster in the playbooks repo
 
-### Template: `dev-template-supplement`
+### Template: `DEV.template-supplement`
 - [ ] Create the repo in the IHE org
 - [ ] Set up directory structure for AsciiDoc supplements (see below)
 - [ ] Create `.github/workflows/publish.yml` — AsciiDoc → HTML + PDF → `gh-pages`
@@ -31,7 +31,7 @@
 - [ ] Test: create a repo from the template, push a change, verify it builds and publishes
 - [ ] Decide on license (TO DO — deferred)
 
-### Tooling: `dev-tooling`
+### Tooling: `DEV.tooling`
 - [ ] Create the repo
 - [ ] Build reusable GitHub Action for AsciiDoc → HTML + PDF rendering
 - [ ] Include any shared scripts or build helpers
@@ -41,7 +41,7 @@
 
 ## Phase 2: Documentation & Governance (P1)
 
-### Playbooks: `dev-playbooks`
+### Playbooks: `DEV.documentation`
 - [ ] Create the repo
 - [ ] Enable GitHub Pages with Jekyll (Settings → Pages → Source: branch `main`, folder `/ (root)` or `/docs`)
 - [ ] Set up minimal Jekyll config (`_config.yml` with title and theme)

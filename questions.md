@@ -10,8 +10,8 @@ What does a supplement look like in AsciiDoc? Specifically:
 - Do you have an existing supplement in AsciiDoc I could use as a reference?
 
 ### Q2: Repo Prefix
-I used `dev-` as the prefix for all Devices repos. Should it be something else?
-- `dev-` (short, clean)
+I used `DEV.` as the prefix for all Devices repos. Should it be something else?
+- `DEV.` (short, clean)
 - `devices-` (more explicit)
 - `DEV-` (matches IHE domain code capitalization)
 - Something else?
@@ -21,7 +21,7 @@ I used `dev-` as the prefix for all Devices repos. Should it be something else?
 ## Non-Blocking (Decide Anytime)
 
 ### Q3: Custom Subdomain
-Do you want a custom subdomain like `devices.ihe.net` or `dev.ihe.net` for the Devices domain's published documents? Or is `ihe.github.io/dev-{repo}` fine for now?
+Do you want a custom subdomain like `devices.ihe.net` or `dev.ihe.net` for the Devices domain's published documents? Or is `ihe.github.io/DEV.{repo}` fine for now?
 
 ### Q4: White Papers
 Is a white papers repo needed now, or is that a future thing? If now, does it need its own template or can it use the supplement template?

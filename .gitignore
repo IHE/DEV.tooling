@@ -12,3 +12,6 @@ Thumbs.db
 # Build output
 output/
 _site/
+
+# Sibling repos (have their own .git)
+DEV.documentation/

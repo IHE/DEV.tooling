@@ -1,8 +1,8 @@
-# dev-tooling — Workspace Overview
+# DEV.tooling — Workspace Overview
 
 ## What This Repo Is
 
-This is the `dev-tooling` repo for the IHE Devices domain GitHub transition. It serves as:
+This is the `DEV.tooling` repo for the IHE Devices domain GitHub transition. It serves as:
 1. **Process documentation** — planning, task tracking, decision records
 2. **Shared tooling** — GitHub Actions, build scripts (once built)
 3. **Proto-repos** — subdirectories that will become their own GitHub repos when ready
@@ -16,7 +16,7 @@ This is the `dev-tooling` repo for the IHE Devices domain GitHub transition. It 
 ## Directory Structure
 
 ```
-/workspace (dev-tooling)
+/workspace (DEV.tooling)
 ├── CLAUDE.md                    # Project instructions
 ├── JOURNAL.md                   # Session handoffs (UADF)
 ├── plan.md                      # Original project spec
@@ -33,10 +33,10 @@ This is the `dev-tooling` repo for the IHE Devices domain GitHub transition. It 
 │   ├── governance.md            # Governance framework (stubbed)
 │   └── adr/                     # Architecture Decision Records
 │
-├── dev-playbooks/               # Proto-repo: Jekyll site for docs
+├── DEV.documentation/               # Proto-repo: Jekyll site for docs
 │   └── (to be scaffolded)
 │
-└── dev-template-supplement/     # Proto-repo: supplement template
+└── DEV.template-supplement/     # Proto-repo: supplement template
     └── (to be scaffolded)
 ```
 
@@ -50,6 +50,6 @@ This is the `dev-tooling` repo for the IHE Devices domain GitHub transition. It 
 | Git repo initialized | Done |
 | UADF set up | Done |
 | Remote configured | Waiting for user to create GitHub repo |
-| `dev-playbooks/` scaffolded | Not started |
-| `dev-template-supplement/` scaffolded | Blocked on supplement structure (Q1) |
+| `DEV.documentation/` scaffolded | Not started |
+| `DEV.template-supplement/` scaffolded | Blocked on supplement structure (Q1) |
 | CI/CD workflow YAML | Not started |
