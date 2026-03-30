@@ -15,3 +15,4 @@ _site/
 
 # Sibling repos (have their own .git)
 DEV.documentation/
+DEV.supplement-template/

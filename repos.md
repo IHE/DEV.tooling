@@ -8,7 +8,7 @@
 
 | Repo Name | Purpose | Status |
 |-----------|---------|--------|
-| `DEV.template-supplement` | Template for new Supplement documents (AsciiDoc + CI/CD) | To build |
+| `DEV.supplement-template` | Template for new Supplement documents (AsciiDoc + CI/CD) | To build |
 
 > Must have **"Template repository"** checked in Settings → General.
 
@@ -28,7 +28,7 @@
 | Repo Name | Purpose | Status |
 |-----------|---------|--------|
 | *(existing TF repo)* | Devices Technical Framework (already exists) | No migration needed |
-| `DEV.{supplement-name}` | Individual supplement repos, created from `DEV.template-supplement` | Created on demand |
+| `DEV.{supplement-name}` | Individual supplement repos, created from `DEV.supplement-template` | Created on demand |
 | `DEV.whitepapers` | White papers (maybe) | TBD |
 
 ---
@@ -40,7 +40,7 @@ DEV.{name}
 ```
 
 **Examples:**
-- `DEV.template-supplement` — the supplement template
+- `DEV.supplement-template` — the supplement template
 - `DEV.wia` — a supplement called "WIA"
 - `DEV.sdpi` — a supplement called "SDPi"
 - `DEV.documentation` — the documentation site

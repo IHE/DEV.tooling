@@ -30,7 +30,7 @@ A Domain Lead or Lead Author will send you a request containing:
 | Field | Example | Required? |
 |-------|---------|-----------|
 | **Repository name** | `DEV.wia` | Yes |
-| **Which template to use** | `DEV.template-supplement` | Yes |
+| **Which template to use** | `DEV.supplement-template` | Yes |
 | **Short description** | "WIA Supplement for Devices" | Yes |
 | **Lead Author GitHub username** | `@janedoe` | Yes |
 
@@ -39,7 +39,7 @@ A Domain Lead or Lead Author will send you a request containing:
 1. Go to **[github.com/organizations/IHE/repositories/new](https://github.com/organizations/IHE/repositories/new)**
 
 2. Under **"Repository template"**, select the template from the request
-   - For supplements: `IHE/DEV.template-supplement`
+   - For supplements: `IHE/DEV.supplement-template`
 
 3. Fill in:
    - **Owner:** `IHE`
@@ -100,7 +100,7 @@ To: [Org Admin email]
 Please create a new repository with the following details:
 
   Repository name: DEV.__________
-  Template: DEV.template-supplement
+  Template: DEV.supplement-template
   Description: ___________________________
   Lead Author GitHub username: @__________
 
@@ -113,7 +113,7 @@ Thank you!
 
 | Template | When to use |
 |----------|-------------|
-| `DEV.template-supplement` | New supplement document |
+| `DEV.supplement-template` | New supplement document |
 
 ---
 

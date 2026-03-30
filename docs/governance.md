@@ -80,7 +80,7 @@ Use imperative mood, describe what was done:
 1. Domain Lead or Lead Author identifies the need for a new repo
 2. They email the Org Admin with:
    - Repository name (`DEV.{name}`)
-   - Which template to use (`DEV.template-supplement`)
+   - Which template to use (`DEV.supplement-template`)
    - Short description
    - Lead Author's GitHub username
 3. Org Admin creates the repo from the template

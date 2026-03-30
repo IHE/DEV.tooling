@@ -77,7 +77,7 @@ When you or a Lead Author needs a new repo, email the Org Admin with:
 Subject: New Devices Domain Repo Request
 
 Repository name: DEV.__________
-Template: DEV.template-supplement
+Template: DEV.supplement-template
 Description: ___________________________
 Lead Author GitHub username: @__________
 ```

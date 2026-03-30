@@ -36,7 +36,7 @@ This is the `DEV.tooling` repo for the IHE Devices domain GitHub transition. It 
 ├── DEV.documentation/               # Proto-repo: Jekyll site for docs
 │   └── (to be scaffolded)
 │
-└── DEV.template-supplement/     # Proto-repo: supplement template
+└── DEV.supplement-template/     # Proto-repo: supplement template
     └── (to be scaffolded)
 ```
 
@@ -51,5 +51,5 @@ This is the `DEV.tooling` repo for the IHE Devices domain GitHub transition. It 
 | UADF set up | Done |
 | Remote configured | Waiting for user to create GitHub repo |
 | `DEV.documentation/` scaffolded | Not started |
-| `DEV.template-supplement/` scaffolded | Blocked on supplement structure (Q1) |
+| `DEV.supplement-template/` scaffolded | Blocked on supplement structure (Q1) |
 | CI/CD workflow YAML | Not started |

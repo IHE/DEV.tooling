@@ -20,7 +20,7 @@
 - [ ] Add initial contributors as team Members
 - [ ] Document the team roster in the playbooks repo
 
-### Template: `DEV.template-supplement`
+### Template: `DEV.supplement-template`
 - [ ] Create the repo in the IHE org
 - [ ] Set up directory structure for AsciiDoc supplements (see below)
 - [ ] Create `.github/workflows/publish.yml` — AsciiDoc → HTML + PDF → `gh-pages`

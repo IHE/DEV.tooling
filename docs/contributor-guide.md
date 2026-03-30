@@ -108,7 +108,7 @@ As a Lead Author, you are the primary owner of a specific supplement or document
 3. **Manage the document lifecycle** — track status (draft, public comment, trial implementation, final text)
 4. **Request the repo** — when starting a new supplement, email the Org Admin (or ask the Domain Lead to) with:
    - Repository name: `DEV.{supplement-name}`
-   - Template: `DEV.template-supplement`
+   - Template: `DEV.supplement-template`
    - Description: one-liner about the supplement
    - Your GitHub username
 
