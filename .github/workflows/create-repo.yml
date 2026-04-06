@@ -6,36 +6,33 @@ on:
 
 jobs:
   create-repo:
-    # Only run on issues with the repo-request label
     if: contains(github.event.issue.labels.*.name, 'repo-request')
     runs-on: ubuntu-latest
 
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.DEVICES_APP_ID }}
           private-key: ${{ secrets.DEVICES_APP_PRIVATE_KEY }}
           owner: IHE
 
-      - name: Parse issue form fields
-        id: parse
-        uses: peter-murray/issue-forms-body-parser@v4
-        with:
-          issue_id: ${{ github.event.issue.number }}
-          separator: '###'
-          label_marker_start: ''
-          label_marker_end: ''
-
-      - name: Extract fields
+      - name: Extract fields from issue body
         id: fields
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          PARSED='${{ steps.parse.outputs.payload }}'
+          # Issue form body looks like:
+          #   ### Repository name
+          #   DEV.something
+          #   ### Template
+          #   DEV.supplement-template
+          #   ...
 
-          REPO_NAME=$(echo "$PARSED" | jq -r '."Repository name"')
-          TEMPLATE=$(echo "$PARSED" | jq -r '.Template')
-          DESCRIPTION=$(echo "$PARSED" | jq -r '.Description')
+          REPO_NAME=$(echo "$ISSUE_BODY" | awk '/^### Repository name/{getline; getline; print}' | xargs)
+          TEMPLATE=$(echo "$ISSUE_BODY" | awk '/^### Template/{getline; getline; print}' | xargs)
+          DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/^### Description/{getline; getline; print}' | xargs)
 
           echo "repo_name=$REPO_NAME" >> "$GITHUB_OUTPUT"
           echo "template=$TEMPLATE" >> "$GITHUB_OUTPUT"
@@ -49,6 +46,10 @@ jobs:
       - name: Validate repo name
         run: |
           REPO_NAME="${{ steps.fields.outputs.repo_name }}"
+          if [[ -z "$REPO_NAME" ]]; then
+            echo "::error::Could not parse repository name from issue body"
+            exit 1
+          fi
           if [[ ! "$REPO_NAME" =~ ^DEV\. ]]; then
             echo "::error::Repository name must start with 'DEV.' — got '$REPO_NAME'"
             exit 1
