@@ -2,7 +2,7 @@ name: Create Repository from Request
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened]
 
 jobs:
   create-repo:
@@ -31,24 +31,20 @@ jobs:
       - name: Extract fields
         id: fields
         run: |
-          # Parse the JSON output from the issue form parser
           PARSED='${{ steps.parse.outputs.payload }}'
 
           REPO_NAME=$(echo "$PARSED" | jq -r '."Repository name"')
           TEMPLATE=$(echo "$PARSED" | jq -r '.Template')
           DESCRIPTION=$(echo "$PARSED" | jq -r '.Description')
-          LEAD_AUTHOR=$(echo "$PARSED" | jq -r '."Lead Author GitHub username"')
 
           echo "repo_name=$REPO_NAME" >> "$GITHUB_OUTPUT"
           echo "template=$TEMPLATE" >> "$GITHUB_OUTPUT"
           echo "description=$DESCRIPTION" >> "$GITHUB_OUTPUT"
-          echo "lead_author=$LEAD_AUTHOR" >> "$GITHUB_OUTPUT"
 
           echo "### Parsed Fields" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Repo:** $REPO_NAME" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Template:** $TEMPLATE" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Description:** $DESCRIPTION" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Lead Author:** $LEAD_AUTHOR" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Validate repo name
         run: |
@@ -95,7 +91,7 @@ jobs:
           - **Template:** ${{ steps.fields.outputs.template }}
           - **Team:** dev-co-chairs (Admin)
 
-          The dev-co-chairs team has Admin access. The lead author (@${{ steps.fields.outputs.lead_author }}) can start working once they've been added to the team by the Domain Lead."
+          The dev-co-chairs team has Admin access. Add contributors via the team or repo settings."
 
       - name: Close issue
         env:

@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         ## New Repository Request
-        Fill in the details below and submit. A workflow will automatically create the repo and assign the Devices team.
+        Fill in the details below and submit. A workflow will automatically create the repo and assign the dev-co-chairs team as Admin.
 
   - type: input
     id: repo_name
@@ -37,11 +37,11 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: lead_author
+  - type: textarea
+    id: notes
     attributes:
-      label: Lead Author GitHub username
-      description: "GitHub username of the lead author (without the @)"
-      placeholder: "janedoe"
+      label: Additional notes
+      description: "Optional: lead author, additional context, or any special setup needed"
+      placeholder: "e.g., Lead author: @janedoe. This supplement covers..."
     validations:
-      required: true
+      required: false
