@@ -1,0 +1,83 @@
+#
+# IHE Devices Domain — Base PDF Theme
+#
+# This is the shared base PDF theme applied to all Devices domain
+# AsciiDoc publications. It is maintained centrally in DEV.tooling
+# and fetched at build time by each supplement repo's CI workflow.
+#
+# To update: edit this file in DEV.tooling. Changes will take effect
+# the next time any supplement repo builds.
+#
+# Individual repos can layer additional PDF styling by creating
+# AsciiDoc_Source/theme/custom-theme.yml with:
+#   extends: ihe-base
+# and then adding only the properties they want to change.
+#
+# See https://docs.asciidoctor.org/pdf-converter/latest/theme/ for
+# full theme reference.
+#
+
+# === Placeholder — replace with IHE branding ===
+
+page:
+  layout: portrait
+  margin: [0.75in, 0.75in, 0.75in, 0.75in]
+  size: Letter
+
+base:
+  font-family: Helvetica
+  font-size: 10.5
+  line-height: 1.4
+  font-color: #333333
+
+heading:
+  font-color: #1a1a2e
+  font-style: bold
+  h1-font-size: 24
+  h2-font-size: 18
+  h3-font-size: 14
+
+title-page:
+  font-color: #1a1a2e
+  title:
+    font-size: 28
+    font-style: bold
+  subtitle:
+    font-size: 16
+
+header:
+  height: 0.5in
+  font-size: 8
+  font-color: #999999
+  border-color: #DDDDDD
+  border-width: 0.5
+  recto:
+    right:
+      content: 'IHE Devices Domain'
+  verso:
+    left:
+      content: 'IHE Devices Domain'
+
+footer:
+  height: 0.5in
+  font-size: 8
+  font-color: #999999
+  border-color: #DDDDDD
+  border-width: 0.5
+  recto:
+    right:
+      content: 'Page {page-number} of {page-count}'
+  verso:
+    left:
+      content: 'Page {page-number} of {page-count}'
+
+table:
+  border-color: #DDDDDD
+  border-width: 0.5
+  head:
+    background-color: #F5F5F5
+    font-style: bold
+
+admonition:
+  border-color: #2196F3
+  border-width: 0.5
