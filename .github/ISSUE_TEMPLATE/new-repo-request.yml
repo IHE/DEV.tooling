@@ -1,0 +1,47 @@
+name: New Repository Request
+description: Request a new Devices domain repository
+title: "Repo Request: DEV."
+labels: ["repo-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## New Repository Request
+        Fill in the details below and submit. A workflow will automatically create the repo and assign the Devices team.
+
+  - type: input
+    id: repo_name
+    attributes:
+      label: Repository name
+      description: "Must start with DEV. (e.g., DEV.my-supplement)"
+      placeholder: "DEV."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: template
+    attributes:
+      label: Template
+      description: Which template should this repo be created from?
+      options:
+        - DEV.supplement-template
+    validations:
+      required: true
+
+  - type: input
+    id: description
+    attributes:
+      label: Description
+      description: A short description of this document
+      placeholder: "e.g., WIA Supplement for Devices domain"
+    validations:
+      required: true
+
+  - type: input
+    id: lead_author
+    attributes:
+      label: Lead Author GitHub username
+      description: "GitHub username of the lead author (without the @)"
+      placeholder: "janedoe"
+    validations:
+      required: true
