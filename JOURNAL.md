@@ -140,3 +140,75 @@ Project log and session handoffs for the IHE Devices Domain GitHub transition.
 - DEV.SDPi is the most mature AsciiDoc supplement (~500+ PRs) and is the best reference for template structure
 - DEV.PCIM is a smaller supplement with PDF backend enabled
 - sdpi-fhir is a FHIR IG companion — old, not actively used, kept for reference only
+
+---
+
+## Session Handoff - 2026-04-06 (Session 3 — Automation & Theming)
+
+### Completed This Session
+
+**Automated repo creation via GitHub Issues:**
+- Created a GitHub App ("IHE Devices Automation") for the IHE org with repo creation, team management, and issues permissions
+- Built issue form template (`.github/ISSUE_TEMPLATE/new-repo-request.yml`) and workflow (`.github/workflows/create-repo.yml`) in DEV.tooling
+- Debugged several issues during setup:
+  - `repo-request` label must exist in the repo before the form can apply it
+  - Initial third-party issue body parser (`peter-murray/issue-forms-body-parser`) broke — replaced with simple `awk` parsing
+  - GitHub App needed Issues Read/Write permission added and accepted via installation settings
+  - Bumped `actions/create-github-app-token` to v2 for Node.js compat
+- Successfully tested end-to-end: issue opened → repo created → team assigned → comment posted → issue closed
+- Documented the full GitHub App setup process in `docs/github-app-setup.md` in DEV.tooling
+
+**DEV.documentation updates:**
+- Restructured Org Admin playbook: automation is primary, manual is fallback
+  - New page: `org-admin-manual-repo-creation.md` (the old manual procedure)
+  - New page: `org-admin-github-app.md` (app maintenance, permissions, key rotation)
+- Updated Domain Lead playbook: reordered procedures (request → configure), updated CI/CD section, added reference links
+- Updated Contributor guide: repo requests point to issue form
+- Updated Governance: repo request process reflects automated + fallback flow
+- Updated all references from `src/` to `AsciiDoc_Source/` (user renamed on GitHub)
+- Added Technical Reference section:
+  - `reference/theming.md` — how shared and per-repo CSS/PDF themes work
+  - `reference/build-system.md` — how CI builds HTML+PDF, downloading artifacts, local preview
+
+**Shared theming infrastructure:**
+- Created `theme/` directory in DEV.tooling with placeholder files:
+  - `ihe-base.css` — shared HTML stylesheet
+  - `ihe-base-theme.yml` — shared PDF theme (page layout, fonts, headers/footers)
+- Updated supplement template workflow to fetch theme from DEV.tooling at build time
+- Added `AsciiDoc_Source/theme/custom.css` placeholder in supplement template for per-repo additive styling (true cascading, not replacement)
+
+**CI/CD validation:**
+- Supplement template build workflow confirmed working on GitHub Actions
+- Fixed path issue when user renamed `src/` to `AsciiDoc_Source/`
+
+### Current State
+- Branch: `main` (all three repos)
+- All repos pushed and up to date with remotes
+- DEV.tooling: last commit `d4e13b0 Add shared theme files for AsciiDoc publications`
+- DEV.documentation: last commit `5628202 Revise domain lead playbook`
+- DEV.supplement-template: last commit `6367eec Add shared theme support to build workflow`
+- Clean working trees on all repos
+- GitHub App installed and working on IHE org
+- CI/CD build passing on DEV.supplement-template
+
+### Next Steps
+1. User continues reviewing documentation for accuracy
+2. Populate IHE branding in theme files (logo, colors, fonts) when assets are available
+3. Pilot: create a real supplement repo from the template and test end-to-end workflow with actual content
+4. Consider automating branch protection setup for new repos (currently manual per Procedure 3a in Domain Lead playbook)
+5. Update `tasks.md` and `repos.md` in DEV.tooling to reflect completed work
+6. Clean up stale planning docs that have been superseded by DEV.documentation
+
+### Open Questions / Blockers
+- Public vs. private repos still TBD
+- License still deferred
+- Branch protection can't be baked into GitHub templates — must be set manually per repo (or automated via a separate workflow)
+- The `docs/` directory was removed from DEV.tooling in Session 2 but the planning files (`tasks.md`, `repos.md`, `questions.md`, `overview.md`) are getting stale — many items are now complete
+- PDF theme `custom-theme.yml` per-repo override is documented but not yet wired into the workflow (only CSS cascading is implemented)
+
+### Relevant Context
+- GitHub Free org plan constraints are well-understood now: no Pages, no custom roles, no sub-orgs. All solutions work within these limits.
+- The GitHub App uses org-level secrets (`DEVICES_APP_ID`, `DEVICES_APP_PRIVATE_KEY`) — accessible to all repos in the org
+- User renamed `src/` to `AsciiDoc_Source/` and restructured the supplement template on GitHub directly — removed volume files, added CP directories
+- The `peter-murray/issue-forms-body-parser` action is unreliable — we use raw `awk` parsing of the issue body instead, which is simpler and has no dependencies
+- The `create-github-app-token` action v2 still triggers a Node.js 20 deprecation warning but works fine
