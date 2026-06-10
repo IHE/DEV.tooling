@@ -80,6 +80,79 @@ jobs:
             /orgs/IHE/teams/dev-co-chairs/repos/IHE/${{ steps.fields.outputs.repo_name }} \
             -f permission="admin"
 
+      - name: Create and assign per-repo teams
+        id: teams
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO_NAME: ${{ steps.fields.outputs.repo_name }}
+        run: |
+          set -euo pipefail
+
+          # Base name = repo name without the "DEV." prefix (e.g. DEV.WIA -> WIA).
+          BASE="${REPO_NAME#DEV.}"
+          WRITER="${BASE}_writer"
+          MAINTAINER="${BASE}_maintainer"
+
+          # Per-repo teams are child teams of "devices-domain". Look up its id so
+          # we can nest the new teams under it. If the parent doesn't exist yet,
+          # fall back to creating standalone teams and warn (don't hard-fail).
+          PARENT_ID=""
+          if PARENT_ID=$(gh api /orgs/IHE/teams/devices-domain --jq '.id' 2>/dev/null); then
+            echo "Parent team 'devices-domain' found (id=$PARENT_ID)."
+          else
+            PARENT_ID=""
+            echo "::warning::Parent team 'devices-domain' not found — creating '$WRITER' and '$MAINTAINER' without a parent. Re-nest them by hand once the parent exists."
+          fi
+
+          # Create a team (idempotent). Child teams must be "closed" (visible),
+          # not secret. Echoes the team's slug whether it was just created or
+          # already existed. Team names are unique per org, so the name lookup
+          # returns exactly one slug.
+          ensure_team() {
+            local name="$1"
+            local resp=""
+            if [[ -n "$PARENT_ID" ]]; then
+              resp=$(gh api --method POST /orgs/IHE/teams \
+                -f name="$name" -f privacy=closed -F parent_team_id="$PARENT_ID" 2>/dev/null) || resp=""
+            else
+              resp=$(gh api --method POST /orgs/IHE/teams \
+                -f name="$name" -f privacy=closed 2>/dev/null) || resp=""
+            fi
+            if [[ -n "$resp" ]]; then
+              jq -r '.slug' <<<"$resp"
+            else
+              # Already exists (or create failed) — find the slug by name.
+              gh api --paginate /orgs/IHE/teams --jq ".[] | select(.name==\"$name\") | .slug"
+            fi
+          }
+
+          WRITER_SLUG=$(ensure_team "$WRITER")
+          MAINTAINER_SLUG=$(ensure_team "$MAINTAINER")
+
+          if [[ -z "$WRITER_SLUG" || -z "$MAINTAINER_SLUG" ]]; then
+            echo "::error::Could not create or find the per-repo teams (writer='$WRITER_SLUG', maintainer='$MAINTAINER_SLUG'). Check that the GitHub App has team management permission."
+            exit 1
+          fi
+
+          # Align each team's repo permission with the role its name implies:
+          #   _writer     -> Write   (push)
+          #   _maintainer -> Maintain
+          gh api --method PUT \
+            "/orgs/IHE/teams/$WRITER_SLUG/repos/IHE/$REPO_NAME" \
+            -f permission="push"
+          gh api --method PUT \
+            "/orgs/IHE/teams/$MAINTAINER_SLUG/repos/IHE/$REPO_NAME" \
+            -f permission="maintain"
+
+          echo "writer=$WRITER" >> "$GITHUB_OUTPUT"
+          echo "maintainer=$MAINTAINER" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Per-repo teams"
+            echo "- **$WRITER** → Write"
+            echo "- **$MAINTAINER** → Maintain"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Comment on issue with result
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -90,9 +163,16 @@ jobs:
 
           - **Repo:** [IHE/${{ steps.fields.outputs.repo_name }}](https://github.com/IHE/${{ steps.fields.outputs.repo_name }})
           - **Template:** ${{ steps.fields.outputs.template }}
-          - **Team:** dev-co-chairs (Admin)
 
-          The dev-co-chairs team has Admin access. Add contributors via the team or repo settings."
+          **Teams assigned:**
+
+          | Team | Repo role |
+          |------|-----------|
+          | \`dev-co-chairs\` | Admin |
+          | \`${{ steps.teams.outputs.maintainer }}\` | Maintain |
+          | \`${{ steps.teams.outputs.writer }}\` | Write |
+
+          The two per-repo teams are child teams of \`devices-domain\`. Add people to \`${{ steps.teams.outputs.writer }}\` (authors) and \`${{ steps.teams.outputs.maintainer }}\` (repo maintainers) via the team pages. See the [Teams reference](https://github.com/IHE/DEV.documentation/blob/main/reference/teams.md)."
 
       - name: Close issue
         env:
