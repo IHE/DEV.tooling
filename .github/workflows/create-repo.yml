@@ -18,6 +18,35 @@ jobs:
           private-key: ${{ secrets.DEVICES_APP_PRIVATE_KEY }}
           owner: IHE
 
+      - name: Authorize requester (must be a dev co-chair)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REQUESTER: ${{ github.event.issue.user.login }}
+        run: |
+          set -euo pipefail
+
+          # Repo creation is restricted to members of the dev-co-chairs team.
+          # The membership endpoint returns state "active" for full members
+          # (including team maintainers), "pending" for unaccepted invites, and
+          # 404 (gh errors out) for non-members. Only "active" is allowed.
+          STATE=$(gh api "/orgs/IHE/teams/dev-co-chairs/memberships/$REQUESTER" \
+            --jq '.state' 2>/dev/null || echo "none")
+
+          if [[ "$STATE" != "active" ]]; then
+            echo "::error::@$REQUESTER is not an active member of dev-co-chairs (state: $STATE) — repo creation denied."
+            gh issue comment ${{ github.event.issue.number }} \
+              --repo ${{ github.repository }} \
+              --body "Sorry @$REQUESTER — automated repository creation is restricted to members of the **dev-co-chairs** team, so this request was not processed.
+
+          If you need a new repository, ask a Devices domain co-chair to open the request. If you believe you should have access, contact a co-chair about joining the team."
+            gh issue close ${{ github.event.issue.number }} \
+              --repo ${{ github.repository }} \
+              --reason "not planned"
+            exit 1
+          fi
+
+          echo "Authorized: @$REQUESTER is an active dev-co-chairs member."
+
       - name: Extract fields from issue body
         id: fields
         env:

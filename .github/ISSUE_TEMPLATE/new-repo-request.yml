@@ -7,7 +7,9 @@ body:
     attributes:
       value: |
         ## New Repository Request
-        Fill in the details below and submit. A workflow will automatically create the repo and assign the dev-co-chairs team as Admin.
+        **Restricted to `dev-co-chairs` members.** A request opened by anyone else is automatically declined and the issue is closed. If you are not a co-chair, please ask one to open this request for you.
+
+        Fill in the details below and submit. A workflow will verify you are a co-chair, then create the repo and assign the dev-co-chairs team as Admin.
 
   - type: input
     id: repo_name
