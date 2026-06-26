@@ -1,0 +1,257 @@
+name: Add People to a Team
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add-to-team:
+    if: contains(github.event.issue.labels.*.name, 'team-add')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.DEVICES_APP_ID }}
+          private-key: ${{ secrets.DEVICES_APP_PRIVATE_KEY }}
+          owner: IHE
+
+      - name: Parse and validate the request
+        id: parse
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          set -euo pipefail
+
+          # Issue-form body looks like:
+          #   ### Team
+          #   WIA_writer
+          #   ### People to add
+          #   @alice
+          #   bob
+          #   carol@example.com
+          #
+          # Pull the single-line Team value (the line two after the header).
+          TEAM_RAW=$(awk '/^### Team/{getline; getline; print; exit}' <<<"$ISSUE_BODY" | tr -d '\r' | xargs)
+
+          # Everything under "### People to add" until the next "### " header
+          # (there is none after it, but be safe) becomes the member list.
+          MEMBERS_RAW=$(awk '
+            /^### People to add/ {grab=1; next}
+            /^### / {grab=0}
+            grab {print}
+          ' <<<"$ISSUE_BODY")
+
+          if [[ -z "$TEAM_RAW" ]]; then
+            echo "::error::Could not parse the Team field from the issue."
+            echo "fail_reason=Could not read the **Team** field from the request." >> "$GITHUB_OUTPUT"
+            echo "status=badform" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Resolve the typed team name to a real team slug, case-insensitively,
+          # against the live list of org teams. Build the eligible set:
+          #   - any child team of devices-domain
+          #   - dev-co-chairs
+          gh api --paginate /orgs/IHE/teams \
+            --jq '.[] | {slug, name, parent: (.parent.slug // "")}' > /tmp/teams.json
+
+          PARENT_OK=$(jq -r --arg t "$TEAM_RAW" \
+            'select((.slug|ascii_downcase)==($t|ascii_downcase) or (.name|ascii_downcase)==($t|ascii_downcase)) | select(.parent=="devices-domain") | .slug' \
+            /tmp/teams.json | head -n1)
+          COCHAIR_OK=$(jq -r --arg t "$TEAM_RAW" \
+            'select((.slug|ascii_downcase)==($t|ascii_downcase) or (.name|ascii_downcase)==($t|ascii_downcase)) | select(.slug=="dev-co-chairs") | .slug' \
+            /tmp/teams.json | head -n1)
+
+          TEAM_SLUG="${PARENT_OK:-$COCHAIR_OK}"
+
+          if [[ -z "$TEAM_SLUG" ]]; then
+            # Not an eligible team — build a friendly list of valid choices.
+            ELIGIBLE=$(jq -r 'select(.parent=="devices-domain" or .slug=="dev-co-chairs") | "- `\(.slug)`"' /tmp/teams.json | sort)
+            {
+              echo "fail_reason<<EOF"
+              echo "**\`$TEAM_RAW\`** is not an eligible team. You can add people to any per-repo team (a child of \`devices-domain\`) or to \`dev-co-chairs\`."
+              echo ""
+              echo "Eligible teams right now:"
+              echo "$ELIGIBLE"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            echo "status=badteam" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Normalize the member list: split on commas and newlines, strip a
+          # leading @, drop blanks, de-duplicate while preserving order.
+          MEMBERS=$(echo "$MEMBERS_RAW" \
+            | tr ',' '\n' \
+            | sed -E 's/^[[:space:]]*@?//; s/[[:space:]]+$//' \
+            | grep -v '^$' \
+            | awk '!seen[$0]++')
+
+          if [[ -z "$MEMBERS" ]]; then
+            echo "fail_reason=No usernames or email addresses were listed under **People to add**." >> "$GITHUB_OUTPUT"
+            echo "status=badform" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "team_slug=$TEAM_SLUG" >> "$GITHUB_OUTPUT"
+          # Stash the member list in a file for the next step (avoids multiline output quirks).
+          echo "$MEMBERS" > /tmp/members.txt
+          echo "status=ok" >> "$GITHUB_OUTPUT"
+
+          echo "Resolved team: $TEAM_SLUG" >> "$GITHUB_STEP_SUMMARY"
+          echo "Members requested:" >> "$GITHUB_STEP_SUMMARY"
+          sed 's/^/- /' /tmp/members.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Reject malformed or ineligible request
+        if: steps.parse.outputs.status != 'ok'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --body "Sorry @${{ github.event.issue.user.login }} — this request couldn't be processed.
+
+          ${{ steps.parse.outputs.fail_reason }}
+
+          Please open a new request with the correct details."
+          gh issue close ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --reason "not planned"
+          exit 1
+
+      - name: Authorize requester
+        id: authz
+        if: steps.parse.outputs.status == 'ok'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REQUESTER: ${{ github.event.issue.user.login }}
+          TEAM_SLUG: ${{ steps.parse.outputs.team_slug }}
+        run: |
+          set -euo pipefail
+
+          # Allowed if the requester is an ACTIVE member of dev-co-chairs,
+          # OR an ACTIVE maintainer of the specific target team.
+          COCHAIR_STATE=$(gh api "/orgs/IHE/teams/dev-co-chairs/memberships/$REQUESTER" \
+            --jq '.state' 2>/dev/null || echo "none")
+
+          ROLE=$(gh api "/orgs/IHE/teams/$TEAM_SLUG/memberships/$REQUESTER" \
+            --jq '.role' 2>/dev/null || echo "none")
+          TARGET_STATE=$(gh api "/orgs/IHE/teams/$TEAM_SLUG/memberships/$REQUESTER" \
+            --jq '.state' 2>/dev/null || echo "none")
+
+          if [[ "$COCHAIR_STATE" == "active" ]]; then
+            echo "Authorized: @$REQUESTER is an active dev-co-chairs member."
+          elif [[ "$ROLE" == "maintainer" && "$TARGET_STATE" == "active" ]]; then
+            echo "Authorized: @$REQUESTER is a maintainer of $TEAM_SLUG."
+          else
+            echo "::error::@$REQUESTER is not authorized to add people to $TEAM_SLUG."
+            gh issue comment ${{ github.event.issue.number }} \
+              --repo ${{ github.repository }} \
+              --body "Sorry @$REQUESTER — adding people to **$TEAM_SLUG** is restricted to members of **dev-co-chairs** or a **maintainer of that team**, so this request was not processed.
+
+          If you believe you should have access, contact a Devices domain co-chair."
+            gh issue close ${{ github.event.issue.number }} \
+              --repo ${{ github.repository }} \
+              --reason "not planned"
+            exit 1
+          fi
+
+      - name: Add people to the team
+        id: add
+        if: steps.parse.outputs.status == 'ok'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TEAM_SLUG: ${{ steps.parse.outputs.team_slug }}
+        run: |
+          set -uo pipefail   # NOTE: no -e; we handle per-entry failures ourselves.
+
+          TEAM_ID=$(gh api "/orgs/IHE/teams/$TEAM_SLUG" --jq '.id')
+
+          # Result table rows accumulate in a file (one Markdown row per line)
+          # to avoid embedding newlines in shell variables.
+          : > /tmp/results.md
+          ANY_FAIL=0
+
+          row() { printf '| %s | %s | %s |\n' "$1" "$2" "$3" >> /tmp/results.md; }
+
+          add_username() {
+            local user="$1" out state
+            # PUT team membership: adds existing org members directly, and for
+            # non-members it creates an org invitation tied to this team. The
+            # response "state" is "active" (added) or "pending" (invited).
+            if out=$(gh api --method PUT "/orgs/IHE/teams/$TEAM_SLUG/memberships/$user" 2>/tmp/err); then
+              state=$(jq -r '.state' <<<"$out")
+              if [[ "$state" == "pending" ]]; then
+                row "\`$user\`" "username" "✉️ Invited to org (pending)"
+              else
+                row "\`$user\`" "username" "✅ Added"
+              fi
+            else
+              local msg
+              msg=$(jq -r '.message? // "error"' /tmp/err 2>/dev/null || echo "error")
+              row "\`$user\`" "username" "❌ Failed — $msg"
+              ANY_FAIL=1
+            fi
+          }
+
+          add_email() {
+            local email="$1" msg
+            # Emails can't use the team-membership endpoint; create an org
+            # invitation with the team attached.
+            if gh api --method POST "/orgs/IHE/invitations" \
+                 -f email="$email" -F "team_ids[]=$TEAM_ID" >/tmp/out 2>/tmp/err; then
+              row "\`$email\`" "email" "✉️ Invited to org (pending)"
+            else
+              msg=$(jq -r '.errors[0].message? // .message? // "error"' /tmp/err 2>/dev/null || echo "error")
+              # Common benign case: the email already has a pending invite.
+              row "\`$email\`" "email" "⚠️ Not sent — $msg"
+              ANY_FAIL=1
+            fi
+          }
+
+          while IFS= read -r entry; do
+            [[ -z "$entry" ]] && continue
+            if [[ "$entry" == *"@"*"."* && "$entry" != *" "* ]]; then
+              add_email "$entry"
+            else
+              add_username "$entry"
+            fi
+          done < /tmp/members.txt
+
+          # Expose the table rows to later steps as a multiline output.
+          {
+            echo "results<<RESULTS_EOF"
+            cat /tmp/results.md
+            echo "RESULTS_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "any_fail=$ANY_FAIL" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Results for $TEAM_SLUG"
+            echo "| Person | Type | Result |"
+            echo "|--------|------|--------|"
+            cat /tmp/results.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment with results and close
+        if: steps.parse.outputs.status == 'ok'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TEAM_SLUG: ${{ steps.parse.outputs.team_slug }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --body "Processed request for team **\`$TEAM_SLUG\`**:
+
+          | Person | Type | Result |
+          |--------|------|--------|
+          ${{ steps.add.outputs.results }}
+
+          People marked *pending* have been emailed an invitation to the IHE organization — they'll join the team automatically once they accept. Already-org-members are added immediately."
+          gh issue close ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --reason completed
