@@ -4,6 +4,65 @@ Project log and session handoffs for the IHE Devices Domain GitHub transition.
 
 ---
 
+## Session Handoff - 2026-06-29 (Session 4 — Team Management & Automation Hardening)
+
+### Completed This Session
+
+Spanned several meetings' worth of notes. All work pushed to the three repos (clean trees).
+
+**Repo-creation automation locked down & enriched (`DEV.tooling/.github/workflows/create-repo.yml`):**
+- **Authorization gate:** repo creation now restricted to active `dev-co-chairs` members. Non-members get a comment + closed issue, no repo created. (commit `5099526`)
+- **Per-repo teams renamed** to space-separated display names: `{base} writer` / `{base} maintainer` (GitHub slugifies to `wia-writer` etc., matching existing teams). Earlier underscore assumption was wrong — real teams use spaces. (commit `d98a12b`)
+- **README/metadata fill-in:** substitutes `{{double-brace}}` placeholders in `README.md` and `AsciiDoc_Source/metadata.adoc` at creation — title/description from the request, unknowns → `TODO:` markers. Single-brace `{attrs}` in `main.adoc` left untouched (resolve at build time).
+- **Team seeding:** requester auto-added as **maintainer of BOTH** new teams (maintainer status does NOT inherit from parent — verified vs GitHub docs). Optional Writers/Maintainers form fields seed the teams; per-person results (added/invited/failed) reported in the issue comment.
+
+**New "Add People to a Team" automation (`DEV.tooling`):**
+- Issue form + workflow (`add-to-team.yml`) that lets a co-chair (or a target team's maintainer) add people to a team by listing usernames/emails. Adding a non-org-member auto-sends an org invitation via the GitHub App — solves the bottleneck where only the org Owner could invite people. (commit `7bcaad0`)
+- Eligible teams: any child of `devices-domain` plus `dev-co-chairs`. Team name validated case-insensitively against the live team list (tolerates spacing/case).
+- Authorization: active `dev-co-chairs` member OR maintainer of the target team.
+
+**CP folder simplification (`DEV.supplement-template`):**
+- Reduced to `CP/` + `CP/Approved/` (dropped Archive subfolders); READMEs in each link to the CP workflow doc. (commit `4ab28c9`)
+
+**Docs updated alongside the code (`DEV.documentation`):**
+- `reference/teams.md` — added §5 "Adding People to a Team (and the org-invite catch)"; renumbered; space-named teams throughout; corrected the "make a manager" steps (checkbox → "change role").
+- `playbooks/domain-lead.md`, `playbooks/org-admin.md`, `playbooks/org-admin-github-app.md`, `governance/README.md` — reflect the restriction, space-named teams, README fill-in, and team seeding.
+- (commits `270e74f`, `fd7e33e`, `3775df9`)
+
+**Testing checklist:** `DEV.tooling/testing-checklist.md` — for group testing sessions, organized by area, tagged with who-should-test, `★` on the one critical unverified assumption.
+
+### Current State
+- Branch: `main` on all three repos; all pushed, clean trees.
+- DEV.tooling: last commit `d98a12b`
+- DEV.documentation: last commit `3775df9`
+- DEV.supplement-template: last commit `4ab28c9`
+- GitHub App "IHE Devices Automation" has `members: write`, `administration: write`, `contents: write`, `issues: write` — sufficient for all current automation.
+
+### Next Steps
+1. **TEST with the working group** — work through `testing-checklist.md`. The **`★` critical item**: confirm a co-chair can cause a brand-new (non-org-member) person to receive an org invite via the App. Everything else depends on this actually working; it's the one assumption I couldn't verify locally (only an Owner could test it, and it needs a real non-member volunteer).
+2. **Documentation pass for completeness** — the new features WERE documented as they were built, but do a deliberate review next session to confirm nothing is missing or stale. Known gaps/things to check:
+   - `playbooks/reviewer.md` mentions neither teams nor the CP workflow — may want a pointer added.
+   - `playbooks/contributor.md` — confirm the CP workflow + "ask a co-chair / use Add People to a Team" guidance reads well end-to-end.
+   - Verify all the new workflow behaviors match what testers actually observe (update docs if reality differs).
+3. Apply any fixes surfaced by testing.
+4. Revisit the still-open governance decisions (below).
+
+### Open Questions / Blockers
+- **★ Unverified:** App-driven org invite for non-members (see Next Step 1). GitHub docs describe the *human* team-membership endpoint as owner-only for non-members but confirm an App with `members:write` can invite — expected to work, must be proven by a real test.
+- Public vs. private repos — still undecided.
+- License for document content — still deferred.
+- CP archival policy — Archive folders dropped; whether/how to archive approved CPs is TBD.
+- **DEV.documentation exposed PAT:** a (now-dead) token is still in plaintext in that repo's `.git/config` remote URL. Rotate/revoke and reset the remote URL when convenient. (Tracked in memory.)
+- Org-invite rate limit on Free plan: 50/day (new orgs) → 500/day after 1 month — relevant only for bulk onboarding.
+
+### Relevant Context
+- **Nested teams (verified vs GitHub docs):** repo *access* inherits parent→child, but *membership and maintainer status do NOT*. There's no "add a team to a team." This is why the creator must be added to each child team directly.
+- **Team naming:** display names are space-separated (`PCIM writer`); GitHub derives hyphen slugs (`pcim-writer`). No underscores. Automation must match on display name or resolve case-insensitively.
+- **Workspace layout:** `DEV.documentation` and `DEV.supplement-template` are nested git clones inside `/workspace` (the DEV.tooling repo). Each pushes to its own remote.
+- **Pushing:** the env `GITHUB_PERSONAL_ACCESS_TOKEN` (user mfaughn) works; pushes use it via an in-memory `http.extraheader` so it's never written into repo configs. The token in DEV.documentation's remote URL is dead — don't rely on it.
+
+---
+
 ## Session Handoff - 2026-03-30 (Session 0 — Bootstrapping)
 
 ### Completed This Session
