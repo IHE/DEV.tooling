@@ -63,6 +63,26 @@ jobs:
           TEMPLATE=$(echo "$ISSUE_BODY" | awk '/^### Template/{getline; getline; print}' | xargs)
           DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/^### Description/{getline; getline; print}' | xargs)
 
+          # Helper: pull a multiline form field's body (all lines under its
+          # "### <label>" header, up to the next "### " header), normalize a
+          # username/email list (split commas/newlines, strip leading @, drop
+          # blanks, drop GitHub's "_No response_" placeholder, de-dup).
+          field_list() {
+            awk -v hdr="### $1" '
+              $0==hdr {grab=1; next}
+              /^### / {grab=0}
+              grab {print}
+            ' <<<"$ISSUE_BODY" \
+              | tr ',' '\n' \
+              | sed -E 's/^[[:space:]]*@?//; s/[[:space:]]+$//' \
+              | grep -v '^$' \
+              | grep -vi '^_No response_$' \
+              | awk '!seen[$0]++'
+          }
+
+          field_list "Writers to add (optional)"     > /tmp/writers.txt
+          field_list "Maintainers to add (optional)" > /tmp/maintainers.txt
+
           echo "repo_name=$REPO_NAME" >> "$GITHUB_OUTPUT"
           echo "template=$TEMPLATE" >> "$GITHUB_OUTPUT"
           echo "description=$DESCRIPTION" >> "$GITHUB_OUTPUT"
@@ -71,6 +91,8 @@ jobs:
           echo "- **Repo:** $REPO_NAME" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Template:** $TEMPLATE" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Description:** $DESCRIPTION" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Writers requested:** $(wc -l < /tmp/writers.txt)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Maintainers requested:** $(wc -l < /tmp/maintainers.txt)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Validate repo name
         run: |
@@ -118,9 +140,12 @@ jobs:
           set -euo pipefail
 
           # Base name = repo name without the "DEV." prefix (e.g. DEV.WIA -> WIA).
+          # Team display names are space-separated ("WIA writer", "WIA maintainer");
+          # GitHub derives the hyphenated slug automatically (wia-writer, wia-maintainer),
+          # matching the existing teams in the org.
           BASE="${REPO_NAME#DEV.}"
-          WRITER="${BASE}_writer"
-          MAINTAINER="${BASE}_maintainer"
+          WRITER="${BASE} writer"
+          MAINTAINER="${BASE} maintainer"
 
           # Per-repo teams are child teams of "devices-domain". Look up its id so
           # we can nest the new teams under it. If the parent doesn't exist yet,
@@ -175,11 +200,149 @@ jobs:
 
           echo "writer=$WRITER" >> "$GITHUB_OUTPUT"
           echo "maintainer=$MAINTAINER" >> "$GITHUB_OUTPUT"
+          echo "writer_slug=$WRITER_SLUG" >> "$GITHUB_OUTPUT"
+          echo "maintainer_slug=$MAINTAINER_SLUG" >> "$GITHUB_OUTPUT"
 
           {
             echo "### Per-repo teams"
             echo "- **$WRITER** → Write"
             echo "- **$MAINTAINER** → Maintain"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fill in README and metadata placeholders
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO_NAME: ${{ steps.fields.outputs.repo_name }}
+          DESCRIPTION: ${{ steps.fields.outputs.description }}
+        run: |
+          set -uo pipefail   # tolerate a missing file; don't fail the whole run
+
+          # Substitute {{DOUBLE_BRACE}} placeholders in the generated repo using
+          # values we actually know. Anything we don't know becomes "TODO: ..."
+          # so authors can see what to fill in. The single-brace {attrs} in
+          # main.adoc are AsciiDoc attribute refs that resolve from metadata at
+          # build time — leave them alone.
+          BASE="${REPO_NAME#DEV.}"
+
+          # Edit one file in place via the Contents API (get sha, patch, PUT).
+          # $1 = path in repo. Reads from /tmp/new, writes back if it changed.
+          patch_file() {
+            local path="$1" meta content sha decoded
+            if ! meta=$(gh api "/repos/IHE/$REPO_NAME/contents/$path" 2>/dev/null); then
+              echo "note: $path not found in template — skipping."
+              return 0
+            fi
+            sha=$(jq -r '.sha' <<<"$meta")
+            decoded=$(jq -r '.content' <<<"$meta" | base64 -d)
+
+            content=$(echo "$decoded" \
+              | sed \
+                -e "s|{{SUPPLEMENT_TITLE}}|$BASE|g" \
+                -e "s|{{SHORT_NAME}}|$BASE|g" \
+                -e "s|{{DESCRIPTION}}|$DESCRIPTION|g" \
+                -e "s|{{STATUS}}|TODO: set status (e.g. Draft for Public Comment)|g" \
+                -e "s|{{REVISION}}|TODO: set revision|g" \
+                -e "s|{{DATE}}|TODO: set date|g" \
+                -e "s|{{EDITOR_NAME}}|TODO: set editor|g")
+
+            if [[ "$content" == "$decoded" ]]; then
+              echo "note: no placeholders changed in $path."
+              return 0
+            fi
+
+            gh api --method PUT "/repos/IHE/$REPO_NAME/contents/$path" \
+              -f message="Fill in placeholders for $REPO_NAME" \
+              -f content="$(echo "$content" | base64 -w0)" \
+              -f sha="$sha" >/dev/null \
+              && echo "Updated $path." \
+              || echo "::warning::Could not update $path."
+          }
+
+          patch_file "README.md"
+          patch_file "AsciiDoc_Source/metadata.adoc"
+
+      - name: Populate team members
+        id: people
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REQUESTER: ${{ github.event.issue.user.login }}
+          WRITER_SLUG: ${{ steps.teams.outputs.writer_slug }}
+          MAINTAINER_SLUG: ${{ steps.teams.outputs.maintainer_slug }}
+        run: |
+          set -uo pipefail   # per-person failures are handled, not fatal
+
+          : > /tmp/people_results.md
+          row() { printf '| %s | %s | %s |\n' "$1" "$2" "$3" >> /tmp/people_results.md; }
+
+          # Add one username to a team at a given role. The membership endpoint
+          # adds existing org members directly and invites non-members (state
+          # "pending"). A bad username returns an error we surface per-person.
+          add_user() {
+            local user="$1" team="$2" role="$3" out state
+            if out=$(gh api --method PUT "/orgs/IHE/teams/$team/memberships/$user" -f role="$role" 2>/tmp/err); then
+              state=$(jq -r '.state' <<<"$out")
+              if [[ "$state" == "pending" ]]; then
+                row "\`$user\`" "$team ($role)" "✉️ Invited (pending)"
+              else
+                row "\`$user\`" "$team ($role)" "✅ Added"
+              fi
+            else
+              local msg
+              msg=$(jq -r '.message? // "error"' /tmp/err 2>/dev/null || echo "error")
+              row "\`$user\`" "$team ($role)" "❌ Failed — $msg"
+            fi
+          }
+
+          add_email() {
+            local email="$1" team_id="$2" team="$3"
+            if gh api --method POST "/orgs/IHE/invitations" \
+                 -f email="$email" -F "team_ids[]=$team_id" >/dev/null 2>/tmp/err; then
+              row "\`$email\`" "$team" "✉️ Invited (pending)"
+            else
+              local msg
+              msg=$(jq -r '.errors[0].message? // .message? // "error"' /tmp/err 2>/dev/null || echo "error")
+              row "\`$email\`" "$team" "⚠️ Not sent — $msg"
+            fi
+          }
+
+          WRITER_ID=$(gh api "/orgs/IHE/teams/$WRITER_SLUG" --jq '.id')
+          MAINTAINER_ID=$(gh api "/orgs/IHE/teams/$MAINTAINER_SLUG" --jq '.id')
+
+          # The requester becomes a MAINTAINER of BOTH teams. Maintainer status
+          # does NOT inherit from the parent team, so they must be added to each
+          # child team directly to be able to manage its roster.
+          add_user "$REQUESTER" "$MAINTAINER_SLUG" "maintainer"
+          add_user "$REQUESTER" "$WRITER_SLUG" "maintainer"
+
+          # Seed the optional people from the form. Usernames go through the team
+          # membership endpoint; emails go through org invitations.
+          process_list() {
+            local file="$1" team_slug="$2" team_id="$3"
+            [[ -s "$file" ]] || return 0
+            while IFS= read -r entry; do
+              [[ -z "$entry" ]] && continue
+              if [[ "$entry" == *"@"*"."* && "$entry" != *" "* ]]; then
+                add_email "$entry" "$team_id" "$team_slug"
+              else
+                add_user "$entry" "$team_slug" "member"
+              fi
+            done < "$file"
+          }
+
+          process_list /tmp/writers.txt "$WRITER_SLUG" "$WRITER_ID"
+          process_list /tmp/maintainers.txt "$MAINTAINER_SLUG" "$MAINTAINER_ID"
+
+          {
+            echo "results<<RESULTS_EOF"
+            cat /tmp/people_results.md
+            echo "RESULTS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### People added"
+            echo "| Person | Team (role) | Result |"
+            echo "|--------|-------------|--------|"
+            cat /tmp/people_results.md
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Comment on issue with result
@@ -201,7 +364,15 @@ jobs:
           | \`${{ steps.teams.outputs.maintainer }}\` | Maintain |
           | \`${{ steps.teams.outputs.writer }}\` | Write |
 
-          The two per-repo teams are child teams of \`devices-domain\`. Add people to \`${{ steps.teams.outputs.writer }}\` (authors) and \`${{ steps.teams.outputs.maintainer }}\` (repo maintainers) via the team pages. See the [Teams reference](https://github.com/IHE/DEV.documentation/blob/main/reference/teams.md)."
+          **People:**
+
+          | Person | Team (role) | Result |
+          |--------|-------------|--------|
+          ${{ steps.people.outputs.results }}
+
+          *Pending* means an org invitation was emailed — they join the team once they accept. As the requester, you were added as a **maintainer of both teams** so you can manage their rosters (maintainer status doesn't inherit from the parent team).
+
+          To add more people later, use [Add People to a Team](https://github.com/IHE/DEV.tooling/issues/new/choose). See the [Teams reference](https://github.com/IHE/DEV.documentation/blob/main/reference/teams.md)."
 
       - name: Close issue
         env:

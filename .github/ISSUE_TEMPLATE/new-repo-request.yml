@@ -40,6 +40,27 @@ body:
       required: true
 
   - type: textarea
+    id: writers
+    attributes:
+      label: Writers to add (optional)
+      description: "GitHub usernames and/or emails to add to the new Writer team — one per line. People not yet in the IHE org are invited automatically. You (the requester) are added as a maintainer of both teams automatically."
+      placeholder: |
+        @alice
+        bob@example.com
+    validations:
+      required: false
+
+  - type: textarea
+    id: maintainers
+    attributes:
+      label: Maintainers to add (optional)
+      description: "GitHub usernames and/or emails to add to the new Maintainer team — one per line."
+      placeholder: |
+        @carol
+    validations:
+      required: false
+
+  - type: textarea
     id: notes
     attributes:
       label: Additional notes
