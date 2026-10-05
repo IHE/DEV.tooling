@@ -16,3 +16,13 @@ _site/
 # Sibling repos (have their own .git)
 DEV.documentation/
 DEV.supplement-template/
+DEV/
+
+# Office lock/temp files
+# Word/Excel/PowerPoint write these next to a document while it is open.
+# Note: the ~$ prefix is NOT covered by the *~ pattern above, which is a suffix.
+~$*
+*.tmp
+
+# LibreOffice lock files
+.~lock.*
