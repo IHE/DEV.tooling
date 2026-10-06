@@ -17,6 +17,9 @@ _site/
 DEV.documentation/
 DEV.supplement-template/
 DEV/
+DEV.MEMDMC/
+DEV.MEMLS/
+DEV.POU/
 
 # Office lock/temp files
 # Word/Excel/PowerPoint write these next to a document while it is open.
