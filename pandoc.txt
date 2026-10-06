@@ -1,0 +1,2 @@
+# convert docx to asciidoc
+pandoc <name_of_file>.docx -f docx -t asciidoc --wrap=none --markdown-headings=atx --extract-media=extracted-media-memls -o <name_of_file>.adoc
