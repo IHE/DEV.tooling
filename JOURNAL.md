@@ -266,8 +266,94 @@ Spanned several meetings' worth of notes. All work pushed to the three repos (cl
 - PDF theme `custom-theme.yml` per-repo override is documented but not yet wired into the workflow (only CSS cascading is implemented)
 
 ### Relevant Context
-- GitHub Free org plan constraints are well-understood now: no Pages, no custom roles, no sub-orgs. All solutions work within these limits.
+- GitHub Free org plan constraints: no custom roles, no sub-orgs. (**Corrected 2026-10-07:** an earlier version of this line said "no Pages" — that is wrong. Pages works on Free for **public** repos, and is now live on the three supplement repos. It is private repos that need a paid plan.)
 - The GitHub App uses org-level secrets (`DEVICES_APP_ID`, `DEVICES_APP_PRIVATE_KEY`) — accessible to all repos in the org
 - User renamed `src/` to `AsciiDoc_Source/` and restructured the supplement template on GitHub directly — removed volume files, added CP directories
 - The `peter-murray/issue-forms-body-parser` action is unreliable — we use raw `awk` parsing of the issue body instead, which is simpler and has no dependencies
 - The `create-github-app-token` action v2 still triggers a Node.js 20 deprecation warning but works fine
+
+---
+
+## Session Handoff - 2026-10-07 (Session 5 — DEV Restructure Merged Forward, Supplements Split Out, Pages Live)
+
+### Completed This Session
+
+**Security: dead PAT scrubbed from all three repos.**
+The journal tracked this as a DEV.documentation-only problem; it was in **all three** `.git/config` remote URLs (same token, identical SHA-256, confirmed revoked — API returns 401). Rewrote every remote to a clean credential-free URL and re-scanned the whole workspace including binaries, reflogs, and packed refs — zero traces remain. Pushes use the env `GITHUB_PERSONAL_ACCESS_TOKEN` via an in-memory `http.extraheader`.
+
+**`IHE/DEV` cloned into the workspace for the first time.**
+It was never here — the journal's `/workspace/iheDev/` path is gone, presumably lost in a container rebuild. Now at **`/workspace/DEV`**, gitignored by DEV.tooling like the other siblings.
+
+**Merged `master` into `reorg` (`3632ee0`) — zero conflicts.**
+`reorg` had been stranded since 2026-04-02 while Kurt pushed 29 commits of CP/TF integration to `master`. Only 4 `.docx` files were touched on `master`, and git's rename detection mapped all four onto their new paths automatically.
+
+**Dispositioned the 8 files `reorg` had deleted (`6b60bf1`, `2cbfdf9`).**
+Restored them into a temporary review folder, then applied the decisions: POU PDF kept (moved to `Supplement Repos/POU/`), `notes.md` kept at root, the six TF Vol1-3 PDFs dropped. Useful finding: those six were really **3 unique documents** — `master` stored each twice, byte-identical.
+
+**Split supplements into their own repos (`ce2a9c5` + one commit each).**
+You created DEV.MEMDMC, DEV.MEMLS, DEV.POU from the template; content migrated out of `DEV/Supplement Repos/`, which was then **removed entirely**. All 9 files verified byte-identical in their new homes before deletion.
+
+**GitHub Pages live on all three supplement repos.**
+- https://ihe.github.io/DEV.MEMLS/
+- https://ihe.github.io/DEV.MEMDMC/
+- https://ihe.github.io/DEV.POU/
+
+**Fixed two real bugs in the supplement template** (`da4eae9`, propagated to all three repos):
+1. **CSS would have 404'd on Pages.** The build passed `-a stylesheet=../output/combined.css`, but under Pages `output/` *is* the site root — that path pointed outside it. Now just `combined.css`.
+2. **`{supplement-title}` rendered literally.** `main.adoc` used the attribute on its title line but `include`d `metadata.adoc` four lines *later*. Include now comes first.
+
+**`.gitignore` across all four original repos.** Office `~$` lock files were slipping through: two repos had `*~`, which looks like it covers them but is a *suffix* pattern — Word uses a `~$` *prefix*.
+
+**Opened PR #51** — https://github.com/IHE/DEV/pull/51, `reorg` → `master`, MERGEABLE, 113 files, +12,006/−68.
+
+**Archived the fork `mfaughn/ihe_dev`** (read-only, not deleted — see Context).
+
+### Current State
+
+All seven repos clean and fully pushed.
+
+| Repo | Branch | Commit |
+|---|---|---|
+| DEV | `reorg` | `ce2a9c5` |
+| DEV.tooling | `main` | `3a2b44b` |
+| DEV.documentation | `main` | `c5b8ec7` |
+| DEV.supplement-template | `main` | `da4eae9` |
+| DEV.MEMDMC | `main` | `0eccc1a` |
+| DEV.MEMLS | `main` | `41aeff6` |
+| DEV.POU | `main` | `676562c` |
+
+`IHE/DEV` `master` is **untouched** at `ef5142f` — PR #51 is open against it, unmerged.
+
+Tests: no test suite in these repos. Verification was the CI builds (all three supplement repos green) plus live HTTP checks of each Pages URL, its CSS, and its PDF — all 200.
+
+Untracked in DEV.tooling, deliberately: `notes_mf.md` (user asked to leave it) and `.claude-dev/` (provision note for the `pyyaml` install).
+
+### Next Steps
+
+1. **Tell Kurt PR #51 is open.** It is his repo day-to-day and the restructure changes every path. No rush — nothing conflicts (see Context) — but he should see it before it merges.
+2. **Decide the published-PDF question, flagged in the PR.** The three `IHE_PCD_TF_Vol1/2/3 2019-12-12.pdf` files are dropped and carried nowhere. Their `.docx` sources survive in `Technical Frameworks/archived docx/Rev_9.0 2019/`, but a source is not the balloted, distributed artifact. Recoverable from `1fd0f133` if the group wants them restored before merge.
+3. **Reconcile `main.adoc` vs the pandoc output** in DEV.MEMLS and DEV.MEMDMC. This is the big one: **the live Pages sites currently publish the empty template scaffold, not the supplement content.** Each repo has `AsciiDoc_Source/MIGRATION-NOTE.md` spelling out the three sub-decisions. Delete the note when done.
+4. **Add "enable Pages" to the repo-creation automation.** `build_type=workflow` is a one-time per-repo API call the workflow cannot do for itself — every new supplement repo needs it or its builds publish nowhere.
+5. **Convert POU to AsciiDoc.** DEV.POU has only the published PDF; no `.docx` source came across, so there is nothing to convert from yet. Find the source.
+6. Still open from Session 4: run the group testing checklist (the ★ org-invite item), and the documentation completeness pass (`playbooks/reviewer.md`, `playbooks/contributor.md`).
+
+### Open Questions / Blockers
+
+- **Published TF PDFs** — drop or restore? Blocks merging PR #51 cleanly. (Next Step 2)
+- **`master` → `main` on `IHE/DEV`: decided NO.** User explicitly declined this session. `IHE/DEV` stays on `master` while every other repo uses `main`. Permanent divergence, harmless today — but any shared tooling that hardcodes a branch name will trip on it.
+- **★ Still unverified from Session 4:** App-driven org invite for a non-member. Needs a real test with an Owner and a volunteer.
+- Public vs. private repos, content license, CP archival policy — all still undecided.
+- `AsciiDoc Source/` (space) vs `AsciiDoc_Source/` (underscore) is inconsistent between `IHE/DEV` and the supplement repos. Cosmetic, but it bites in shell commands.
+
+### Relevant Context
+
+- **Correction to an earlier claim in this journal: Kurt has no in-flight work.** Session 4 and early this session warned that ~15 CP branches would be invalidated by the restructure. Checked properly: **all 13 CP/integration branches are `ahead_by: 0`** — fully merged into `master`, nothing unmerged. No open PRs, and zero commits to `master` in the 30 days before 2026-10-06. Telling Kurt is courtesy, not a blocker.
+- **The `reorg` branch is the reorganization. `restructure` is not.** `restructure` (2026-01-23, Marc Druckenmueller) is already fully merged into `master` and still has the **old** layout; it is just the fork point `reorg` grew from. Easy to confuse by name.
+- **`IHE/DEV`'s default branch is `master`, not `main`.** There is no `main` branch on it.
+- **The fork `mfaughn/ihe_dev` was archived, not deleted.** Its `main` tip `6f7c8b9` exists **nowhere else** — reachable from no `IHE/DEV` branch, and a local `gc` pruned it for exactly that reason. The content is redundant (old layout, stale `adoc/`), but deleting the fork would destroy that commit object and kill merged PR #40's cross-repo links. Archived is reversible; if it is ever deleted, tag `6f7c8b9` in `IHE/DEV` first.
+- **Images in the supplement repos were deliberately left under `extracted-media-*/`** rather than moved to `images/`. Keeps the converted `.adoc` rendering correctly on its own. Moving them means rewriting every `image:` reference — part of the Next Step 3 decision, not separate from it.
+- **A GitHub Actions run can hang in `waiting`** with no reviewers and no wait timer, with config identical to runs that succeed. DEV.MEMDMC did this for several minutes. Cancel and re-run clears it; it is not a misconfiguration.
+- **`grep` in this container is shadowed by a shell function that skips `.git`.** It silently found nothing when searching for the leaked token. Use `/usr/bin/grep` for anything that must search `.git` or binaries.
+- **`ls` quoting directory names in single quotes is normal** coreutils behavior for names containing spaces, not a problem. `ls -N` or `QUOTING_STYLE=literal` disables it. The spaces are real and inherited from the original IHE layout, which is why nearly every path here needs quoting.
+- **pandoc is not installed in this container** and cannot be installed (no sudo, no network). The `pandoc.txt` fix was verified by inspection, not by running a conversion.
+- **Verifying "did content survive a move?" by path is unreliable** when a restructure renames directories. Compare **blob hashes** against the whole target tree instead — that is what caught the duplicate-PDF finding and confirmed the migrations.
